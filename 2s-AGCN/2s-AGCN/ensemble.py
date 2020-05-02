@@ -3,7 +3,7 @@ import pickle
 
 import numpy as np
 from tqdm import tqdm
-
+import pandas as pd
 parser = argparse.ArgumentParser()
 parser.add_argument('--datasets', default='ntu/xsub', choices={'kinetics', 'ntu/xsub', 'ntu/xview'},
                     help='the work folder for storing results')
@@ -18,8 +18,13 @@ r1 = list(pickle.load(r1).items())
 r2 = open('./work_dir/' + dataset + '/agcn_test_bone/epoch1_test_score.pkl', 'rb')
 r2 = list(pickle.load(r2).items())
 right_num = total_num = right_num_5 = 0
+sub = pd.DataFrame()
+sub['skeleton file name'] = []
+sub['pred'] = []
+sub['ground truth'] = []
+
 for i in tqdm(range(len(label[0]))):
-    _, l = label[:, i]
+    name, l = label[:, i]
     _, r11 = r1[i]
     _, r22 = r2[i]
     r = r11 + r22 * arg.alpha
@@ -28,6 +33,12 @@ for i in tqdm(range(len(label[0]))):
     r = np.argmax(r)
     right_num += int(r == int(l))
     total_num += 1
+    s2 = pd.Series([name, str(r), l],
+                   index=['skeleton file name', 'pred', 'ground truth'])
+    sub = sub.append(s2, ignore_index=True)
+
 acc = right_num / total_num
 acc5 = right_num_5 / total_num
 print(acc, acc5)
+
+sub.to_csv("final_output.csv", index=False)
